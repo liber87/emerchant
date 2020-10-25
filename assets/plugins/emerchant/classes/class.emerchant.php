@@ -449,6 +449,6 @@ class emerchant {
 			$this->modx->db->query('Delete from '.$this->orderthintable.' where name="'.$token.'"');
 			setcookie("token","",time()-10000,'/');							
 		}	
-		$this->modx->invokeEvent('OneMerchantClearCart',array('em'=>$this));		
+		$this->modx->invokeEvent('OnMerchantClearCart',array('em'=>$this));		
 	}	
 }
