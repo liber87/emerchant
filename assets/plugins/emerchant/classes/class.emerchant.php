@@ -282,7 +282,7 @@ class emerchant {
 			$diff['count.items'] = $diff['count.items'] + $item['count'];			
 		}		
 		
-		$evtOut = $this->modx->invokeEvent('OneMerchantDifferentPrices',array('diff'=>$diff,'em'=>$this));
+		$evtOut = $this->modx->invokeEvent('OnEmerchantDifferentPrices',array('diff'=>$diff,'em'=>$this));
         if(is_array($evtOut)) $diff = json_decode($evtOut[0],true);			
 		$diff['price.final'] = $diff['price.full']+$diff['delivery']+$diff['payment']-$diff['sale']+$diff['other'];
 		return $diff;
@@ -402,7 +402,7 @@ class emerchant {
 		'name'=>$this->modx->db->escape($this->config['cart_name'])
 		],
 		$this->ordertable);
-		$this->modx->invokeEvent('OneMerchantSaveOrder',array('oid'=>$oid,'data'=>$data,'em'=>$this));
+		$this->modx->invokeEvent('OneMerchantSaveOrder',array('oid'=>$oid,'cart'=>$this->cart,'form'=>$data,'em'=>$this));
 		return $oid;
 	}
 	
@@ -449,6 +449,6 @@ class emerchant {
 			$this->modx->db->query('Delete from '.$this->orderthintable.' where name="'.$token.'"');
 			setcookie("token","",time()-10000,'/');							
 		}	
-		$this->modx->invokeEvent('OnMerchantClearCart',array('em'=>$this));		
+		$this->modx->invokeEvent('OnEmerchantClearCart',array('em'=>$this));		
 	}	
 }
