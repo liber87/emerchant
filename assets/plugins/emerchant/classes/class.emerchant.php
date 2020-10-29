@@ -18,50 +18,50 @@ class emerchant {
      */
     function __construct(&$modx, $config = array()){
 		
-        $this->modx = $modx;
-		$pconfig = $this->getPluginConfig();	
-		$config = array_merge($pconfig,$config);
+        $this->modx = evolutionCMS();
+	$pconfig = $this->getPluginConfig();	
+	$config = array_merge($pconfig,$config);
 		
-		if (!$config['cart_name']) $config['cart_name'] = 'default';
-		if (!$config['pricetv']) $config['pricetv'] = 'price';
-		if (!$config['emailTo']) $config['emailTo'] = $modx->config['emailsender'];
-		if (!$config['emailFrom']) $config['emailFrom'] = $modx->config['emailsender'];
-		if (!$config['subject']) $config['subject'] = 'Новый заказ на сайте';
+	if (!$config['cart_name']) $config['cart_name'] = 'default';
+	if (!$config['pricetv']) $config['pricetv'] = 'price';
+	if (!$config['emailTo']) $config['emailTo'] = $modx->config['emailsender'];
+	if (!$config['emailFrom']) $config['emailFrom'] = $modx->config['emailsender'];
+	if (!$config['subject']) $config['subject'] = 'Новый заказ на сайте';
 		
-		$tplPaths = $this->tplPaths = MODX_BASE_PATH.'assets/plugins/emerchant/tpls/';		
-		$this->config = $config;		
-		if (isset($_SESSION['orderId'])) $this->config['orderId'] = $_SESSION['orderId'];			
-		$this->setTplsFromFiles($tplPaths);		
-		$this->rowPrepare = '';
-		$this->ownerPrepare = '';
+	$tplPaths = $this->tplPaths = MODX_BASE_PATH.'assets/plugins/emerchant/tpls/';		
+	$this->config = $config;		
+	if (isset($_SESSION['orderId'])) $this->config['orderId'] = $_SESSION['orderId'];			
+	$this->setTplsFromFiles($tplPaths);		
+	$this->rowPrepare = '';
+	$this->ownerPrepare = '';
 				        
-		include_once(MODX_BASE_PATH.'assets/snippets/DocLister/lib/DLTemplate.class.php');
-		$tpl = DLTemplate::getInstance($modx);
-		$this->tpl = $tpl;				
-		$this->ordertable = $modx->getFullTableName('emerchant_orders');
-		$this->orderthintable = $modx->getFullTableName('emerchant_orders_thin');
-		$this->tvtable = $modx->getFullTableName('site_tmplvar_contentvalues');	
-		$this->tvnametable = $modx->getFullTableName('site_tmplvars');			
-		$this->contenttable = $modx->getFullTableName('site_content');		
-		$this->priceid = $modx->db->getValue('Select `id` from '.$modx->getFullTableName('site_tmplvars').' where `name`="'.$config['pricetv'].'"');				
+	include_once(MODX_BASE_PATH.'assets/snippets/DocLister/lib/DLTemplate.class.php');
+	$tpl = DLTemplate::getInstance($modx);
+	$this->tpl = $tpl;				
+	$this->ordertable = $modx->getFullTableName('emerchant_orders');
+	$this->orderthintable = $modx->getFullTableName('emerchant_orders_thin');
+	$this->tvtable = $modx->getFullTableName('site_tmplvar_contentvalues');	
+	$this->tvnametable = $modx->getFullTableName('site_tmplvars');			
+	$this->contenttable = $modx->getFullTableName('site_content');		
+	$this->priceid = $modx->db->getValue('Select `id` from '.$modx->getFullTableName('site_tmplvars').' where `name`="'.$config['pricetv'].'"');				
 				
-		if (!isset($this->config['orderId'])){			
-			//Проверяем живучисть сессии, если что, вытаскиваем из куки			
-			if ((isset($_COOKIE["token"])) && (!$_SESSION['emCart'][$this->config['cart_name']])){
-				$token = $modx->db->escape($_COOKIE["token"]);
-				$this->cart = json_decode($modx->db->getValue('Select cart from  '.$this->orderthintable.' where name="'.$token.'"'),true);
-			}
-			else{
-			if (!$_SESSION['emCart'][$this->config['cart_name']]) $_SESSION['emCart'][$this->config['cart_name']] = array();	
-			$this->cart = $_SESSION['emCart'][$this->config['cart_name']];}
+	if (!isset($this->config['orderId'])){			
+		//Проверяем живучисть сессии, если что, вытаскиваем из куки			
+		if ((isset($_COOKIE["token"])) && (!$_SESSION['emCart'][$this->config['cart_name']])){
+			$token = $modx->db->escape($_COOKIE["token"]);
+			$this->cart = json_decode($modx->db->getValue('Select cart from  '.$this->orderthintable.' where name="'.$token.'"'),true);
 		}
-		else {			
-			$this->cart = json_decode($this->modx->db->getValue('Select `cart` from '.$this->ordertable.'
-											 where id='.$this->config['orderId']),1);
-		}
-		$this->cart['different'] = $this->differentPrices();
-		$this->saveCart();
-		$this->modx->invokeEvent('OnEmerchantInit',array('em' => $this));        		
+		else{
+		if (!$_SESSION['emCart'][$this->config['cart_name']]) $_SESSION['emCart'][$this->config['cart_name']] = array();	
+		$this->cart = $_SESSION['emCart'][$this->config['cart_name']];}
+	}
+	else {			
+		$this->cart = json_decode($this->modx->db->getValue('Select `cart` from '.$this->ordertable.'
+										 where id='.$this->config['orderId']),1);
+	}
+	$this->cart['different'] = $this->differentPrices();
+	$this->saveCart();
+	$this->modx->invokeEvent('OnEmerchantInit',array('em' => $this));        		
     }
 	
 	/*
