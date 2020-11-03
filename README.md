@@ -20,7 +20,7 @@
 ```html
 <script>
 function emAddPostition(data){	
-	alert('Вы добавили товар с названием "'+data.shk-name+'" и с id '+data.shk-id);
+	alert('Вы добавили товар с названием "'+data.em-name+'" и с id '+data.em-id);
 }
 </script>
 ```
@@ -32,7 +32,7 @@ function emAddPostition(data){
 //data то, что пришло в post
 $weights = array('1 кг'=>array('tv_id'=>5,'box'=>25), '1.5 кг'=>array('tv_id'=>6,'box'=>30), '0.5 кг'=>array('tv_id'=>7,'box'=>0),'2 кг'=>array('tv_id'=>29,'box'=>30));
 
-$position['price'] = $modx->db->getValue('Select `value` from '.$shk->tvtable.' where `contentid`='.$position['id'].' and tmplvarid='.$weights[$data['weight']]['tv_id']);
+$position['price'] = $modx->db->getValue('Select `value` from '.$em->tvtable.' where `contentid`='.$position['id'].' and tmplvarid='.$weights[$data['weight']]['tv_id']);
 $position['price.add'] = array('box'=>$weights[$data['weight']]['box']);
 $modx->event->setOutput(json_encode($position));
 ```
@@ -175,7 +175,7 @@ emerchantAfterOrderSent - после отправки формы (не сраб�
 **События:**
 
 *** Для всех событий, кроме OneMerchantSendLetter, доступен основной класс $em*** 
-OnEmerchantInit - инициализация evoShk 
+OnEmerchantInit - инициализация eMerchant 
 
 OnEmerchantAddToCart - добавление в корзину (Доступен $position - то, что передалось)
 
