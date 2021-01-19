@@ -20,7 +20,7 @@
 ```html
 <script>
 function emAddPostition(data){	
-	alert('Вы добавили товар с названием "'+data.em-name+'" и с id '+data.em-id);
+	alert('Вы добавили товар с названием "'+data['em-name']+'" и с id '+data['em-id']);
 }
 </script>
 ```
