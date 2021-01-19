@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', function(){
 	function unserialize (serializedString) {
-		var str = decodeURI(serializedString);var pairs = str.split('&');var obj = {
-		}
-		, p, idx, val;for (var i=0, n=pairs.length;i < n;i++) {
-			p = pairs[i].split('=');idx = p[0];if (idx.indexOf("[]") == (idx.length - 2)) {
-				var ind = idx.substring(0, idx.length-2);if (obj[ind] === undefined) {
-				obj[ind] = [];}
-			obj[ind].push(p[1]);}
+		var str = decodeURI(serializedString);
+		var pairs = str.split('&');
+		var obj = {}, p, idx, val;for (var i=0, n=pairs.length;i < n;i++) {
+			p = pairs[i].split('=');
+			idx = p[0];
+			if (idx.indexOf("[]") == (idx.length - 2)) {
+				var ind = idx.substring(0, idx.length-2);
+				if (obj[ind] === undefined) {obj[ind] = [];}
+				obj[ind].push(p[1]);
+			}
 			else {
 			obj[idx] = p[1];}
 		}
@@ -47,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function(){
 				break;}
 				break;
 				case 'BUTTON': switch (form.elements[i].type) {
-				case 'reset': case 'submit': case 'button':q.push(form.elements[i].name + "=" + encodeURIComponent(form.elements[i].value));
+					case 'reset': case 'submit': case 'button':q.push(form.elements[i].name + "=" + encodeURIComponent(form.elements[i].value));
 				break;}
 			break;}
 		}
