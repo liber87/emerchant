@@ -78,7 +78,7 @@ $modx->event->setOutput(json_encode($position));
 <div style="position:relative;" class="em-cart-item" data-hash="[+hash+]">
 	<div class="cart-left">
 		<img src="[+image+]">
-		<a class="shk-del">удалить</a>
+		<a class="em-del">удалить</a>
 	</div>
 	<div class="cart-right">
 		<h4 class="cart-name">[+pagetitle+] [+add.weight+]</h4>
@@ -87,9 +87,9 @@ $modx->event->setOutput(json_encode($position));
 	<div style="float:right;">
 		<span>[+price.base+] + [+price.add.box+]</span>
 		
-		<span class="shk-minus">-</span>
-		<input class="shk-count-value" value="[+count+]">
-		<span class="shk-plus">+</span>
+		<span class="em-minus">-</span>
+		<input class="em-count-value" value="[+count+]">
+		<span class="em-plus">+</span>
 		
 		<span class="subtotal">[+price.options.full.total+] руб. </span>
 	</div>	
