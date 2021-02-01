@@ -318,10 +318,10 @@ class emerchant {
 		if ($this->rowPrepare){				
 			foreach(explode(',',$this->rowPrepare) as $name){
 				if ((is_object($name)) || is_callable($name)) {
-					$result = call_user_func_array($name, $data);
+					$result = call_user_func_array($name, array('data'=>$data));
 					if ((is_array($result)) && (count($result))) $data = $result;
 				} else {
-					$result = $this->modx->runSnippet($name, $data);
+					$result = $this->modx->runSnippet($name, array('data'=>$data));
 					if ((is_array($result)) && (count($result))) $data = $result;
 				}				
 			}
