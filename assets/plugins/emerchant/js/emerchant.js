@@ -126,7 +126,13 @@ document.addEventListener('DOMContentLoaded', function(){
 	});
 	
 	document.addEventListener('click', function(event) {
-		var t = event.target.closest('.em-cart-item .em-plus');if (!t) return;event.preventDefault;var input = event.target.closest('.em-cart-item').querySelector('.em-count-value');var val = parseInt(input.value)+1;input.value = val;var event = document.createEvent("Event");
+		var t = event.target.closest('.em-cart-item .em-plus');
+		if (!t) return;
+		event.preventDefault;
+		var input = event.target.closest('.em-cart-item').querySelector('.em-count-value');
+		var val = parseInt(input.value)+1;
+		input.value = val;
+		var event = document.createEvent("Event");
 		event.initEvent("change", true, true);
 		input.dispatchEvent(event);
 		return false;
@@ -143,6 +149,22 @@ document.addEventListener('DOMContentLoaded', function(){
 			event.initEvent("change", true, true);
 			input.dispatchEvent(event);
 		}
+		return false;
+	});
+	
+	document.addEventListener('click', function(event) {
+		var t = event.target.closest('.em-cart .em-clear');
+		if (!t) return;
+		event.preventDefault;
+		const request = new XMLHttpRequest();
+		request.open("GET", 'emerchant/act?clearCart');
+		request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		request.addEventListener("readystatechange", () => {
+			if(request.readyState === 4 && request.status === 200) {
+			reload_carts();
+			if ( typeof(emAfterClearCart) == 'function') emAfterClearCart();}
+		});
+		request.send();
 		return false;
 	});
 	
