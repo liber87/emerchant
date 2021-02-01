@@ -161,15 +161,15 @@ order.outer.tpl - Общая, order.row.tpl - строка
 **js-функции на события:**
 emerchantReloadCart - обновление корзины
 
-emerchantAddPostition - добавление позиции
+emAddPostition - добавление позиции
 
-emerchantRemovePosition - удаление позиции
+emRemovePosition - удаление позиции
 
-emerchantBeforeRecountPosition - до пересчета
+emBeforeRecountPosition - до пересчета
 
-emerchantAfterRecountPosition - после пересчета
+emAfterRecountPosition - после пересчета
 
-emerchantAfterOrderSent - после отправки формы (не срабатывает если указан data-redirect)
+emAfterOrderSent - после отправки формы (не срабатывает если указан data-redirect)
 
 
 **События:**
