@@ -60,6 +60,7 @@ class emerchant {
 										 where id='.$this->config['orderId']),1);
 	}
 	$this->cart['different'] = $this->differentPrices();
+	$this->startCurrency();
 	$this->saveCart();
 	$this->modx->invokeEvent('OnEmerchantInit',array('em' => $this));        		
     }
@@ -104,12 +105,47 @@ class emerchant {
 	*/
 	function numberFormat($price){
 		$format = explode('|',$this->config['numberFormat']);
-		if (!is_array($price)) return number_format($price, $format[0], $format[1], $format[2]);
+		if (!is_array($price)) {
+			$price = number_format($price, $format[0], $format[1], $format[2]); 
+			return rtrim(rtrim($price, '0'), '.');
+		}
 		else {
-		foreach($price as $key => $val) $price[$key] = number_format($val, $format[0], $format[1], $format[2]);
+			foreach($price as $key => $val) if (is_numeric($val)) {
+				$price[$key] = number_format($val, $format[0], $format[1], $format[2]);
+				$price[$key] = rtrim(rtrim($price[$key], '0'), '.');
+			}				
+			return $price;
+		}
+	}
+	
+	/*
+	* Установка курса по умолчанию
+	*/
+	function startCurrency(){
+		if (!is_array($_SESSION['emCart'][$this->config['cart_name']]['currency'])) {
+			$_SESSION['emCart'][$this->config['cart_name']]['currency'] = array('name'=>'USD','currency'=>1);
+		}
+	}
+	
+	/*
+	* Получение курса 
+	*/
+	function getCurrencyName(){				
+		return $_SESSION['emCart'][$this->config['cart_name']]['currency']['name'];		
+	}
+	
+	/*
+	* Устанавливаем цены согласно курсу
+	*/
+	function setCurrency($price){				
+		$currency = $_SESSION['emCart']['default']['currency']['currency'];		
+		if (!is_array($price)) return $price*$currency;
+		else {
+		foreach($price as $key => $val) if (is_numeric($val)) $price[$key] = $val * $currency;
 		return $price;
 		}
 	}
+	
 	
 	/*
 	* Устанавливаем шаблоны из файлов
@@ -264,16 +300,28 @@ class emerchant {
 		ON DUPLICATE KEY UPDATE `cart` = "'.$this->modx->db->escape(json_encode($this->cart, JSON_UNESCAPED_UNICODE)).'"');
 	}
 	
+		
 	/*
 	* Проставление различных дополнительных наценок и скидок
 	*/
 	function differentPrices(){				
-		if (!is_array($this->cart['items'])) return;
-		$diff = array('price.base'=>0,'price.add'=>0,'price.full'=>0,'delivery'=>0,'payment'=>0,'sale'=>0,'other'=>0,'count.items'=>0,'price.final'=>0);		
+		if (!is_array($this->cart['items'])) return;		
+		$diff = array(
+		'price.base'=>0,
+		'price.add'=>0,
+		'price.full'=>0,
+		'delivery'=>0,
+		'payment'=>0,
+		'sale'=>0,
+		'other'=>0,
+		'count.items'=>0,
+		'price.final'=>0
+		);				
 		
-		foreach($this->cart['items'] as $item){			
+		foreach($this->cart['items'] as $item){	
+		
 			$diff['price.base'] = $diff['price.base'] + ($item['price']*$item['count']);
-			if (count($item['price.add'])){
+			if ((is_array($item['price.add'])) && (count($item['price.add']))){			
 				$apf = 0;
 				foreach($item['price.add'] as $ap) $apf = $apf + $ap;
 				$diff['price.add'] = $diff['price.add'] + ($apf*$item['count']);
@@ -284,7 +332,7 @@ class emerchant {
 		
 		$evtOut = $this->modx->invokeEvent('OnEmerchantDifferentPrices',array('diff'=>$diff,'em'=>$this));
         if(is_array($evtOut)) $diff = json_decode($evtOut[0],true);			
-		$diff['price.final'] = $diff['price.full']+$diff['delivery']+$diff['payment']-$diff['sale']+$diff['other'];
+		$diff['price.final'] = $diff['price.full']+$diff['delivery']+$diff['payment']-$diff['sale']+$diff['other'];		
 		return $diff;
 	}
 	
@@ -298,19 +346,23 @@ class emerchant {
 		while ($row = $this->modx->db->getRow($res)) $tvs[$row['name']] = $row['value'];
 		$res = $this->modx->db->query('Select * from '.$this->contenttable.' where id='.$item['id']);				
 		$doc = $this->modx->db->getRow($res);		
+		
+		
+		
 		if (!is_array($doc)) $doc = array();
 		$data = array_merge($tvs,$item,$doc);				
 		$data['num'] = $num+1;
+		$data['count.items'] = $data['count'];
 		$data['price.base'] = $data['price'];
 		$data['price.options'] = 0;
-		$data['price.options.full'] = $data['price'];		
+		$data['price.options.full'] = $data['price'];// + $data['price.add'];		
 		
-		if (count($data['price.add'])){
+		if (is_array($item['price.add']) && (count($data['price.add']))){
 			foreach($data['price.add'] as $name => $price){			
 				$data['price.options'] = $data['price.options'] + $price;
 				$data['price.options.full'] = $data['price.options.full'] + $price;				
 			}
-		}		
+		}
 		$data['price.base.total'] = $data['price.base']*$data['count'];
 		$data['price.options.total'] = $data['price.options']*$data['count'];
 		$data['price.options.full.total'] = $data['price.options.full']*$data['count'];	
@@ -321,12 +373,19 @@ class emerchant {
 					$result = call_user_func_array($name, array('data'=>$data));
 					if ((is_array($result)) && (count($result))) $data = $result;
 				} else {
-					$result = $this->modx->runSnippet($name, array('data'=>$data));
-					if ((is_array($result)) && (count($result))) $data = $result;
+					$result = $this->modx->runSnippet($name, array('data'=>$data));					
+					if ((is_array($result)) && (count($result))) $data = $result;					
 				}				
 			}
-		}
-		foreach($data as $key => $val) if (strpos($key,'price.')!==false) $data[$key] = $this->numberFormat($val);
+		}		
+		
+		foreach($data as $key => $val) if (strpos($key,'price')!==false) {				
+			$val = $this->setCurrency($val);									
+			$data[$key] = $this->numberFormat($val);
+		}		
+		
+		$data['current_currency'] = $this->getCurrencyName();		
+		
 		return $this->tpl->parseChunk($tpl,$data).PHP_EOL;			
 	}
 	
@@ -336,13 +395,26 @@ class emerchant {
 	function makeCart($tpl = '',$ownerTPL ='', $noneTPL= '', $oid = 0){
 		if ((!isset($this->cart['items'])) or (!count($this->cart['items']))) $ownerTPL = $noneTPL;		
 		$odata = $this->cart['different'];
-		if ((is_array($odata)) && (count($odata))) foreach($odata as $key => $val) if ($key!='count.items') $odata[$key] = $this->numberFormat($val);		
+		if ((is_array($odata)) && (count($odata))) {
+			foreach($odata as $key => $val) {
+				if ($key!='count.items') {
+					$val = $this->setCurrency($val);
+					$odata[$key] = $this->numberFormat($val);		
+				}
+			}
+		}
 		if ($oid) {
 			$order = $this->getOrderInfo($oid);
 			$odata['orderID'] = $oid;
 			if (is_array($odata)) $odata = array_merge($odata,$order);			
 		}
-		if ((is_array($this->cart['items'])) && (count($this->cart['items']))) foreach($this->cart['items'] as $num => $item) $odata['cart'].= $this->makeRowCart($tpl,$item,$num);		
+		
+		if ((is_array($this->cart['items'])) && (count($this->cart['items']))) {
+			foreach($this->cart['items'] as $num => $item) {
+				$odata['cart'].= $this->makeRowCart($tpl,$item,$num);		
+			}
+		}
+		$odata['current_currency'] = $this->getCurrencyName();
 		return $this->tpl->parseChunk($ownerTPL,$odata);
 	}
 	
@@ -383,9 +455,7 @@ class emerchant {
 		}			
 		$out.= '</div>';		
 		return $out;
-	}
-	
-	
+	}	
 		
 	
 	/**
@@ -436,19 +506,39 @@ class emerchant {
 	*	Вывод таблицы модуля
 	*/
 	function getModuleTable($paginate){
-		return $this->modx->runSnippet('DocLister', array('controller'=>'onetable','table'=>'emerchant_orders','idField'=>'id','orderBy'=>'id desc','display'=>15,'parents'=>'1','parentField'=>'dl','showParent'=>-1,'prepare'=>'ShkDashboardPrepare'.$prepareTable,'addWhereList'=>$aw,'paginate'=>$paginate,'TplNextP'=>'','TplPrevP'=>'','TplPage'=>'@CODE: <li><a href="index.php?a=112&id='.$_GET['id'].'&page=[+num+]" >[+num+]</a></li>','TplCurrentPage'=>'@CODE: <li class="active"><a>[+num+]</a></li>','TplWrapPaginate'=>'@CODE: <ul id="pagination">[+wrap+]</ul>','TplDotsPage'=>'@CODE: <li><a>...</a></li>','ownerTPL'=>$this->config['module.table.outer.tpl'],'tpl'=>$this->config['module.table.row.tpl']));
+		return $this->modx->runSnippet('DocLister',
+		array('controller'=>'onetable',
+		'table'=>'emerchant_orders',
+		'idField'=>'id',
+		'orderBy'=>'id desc',
+		'display'=>15,
+		'parents'=>'1',
+		'parentField'=>'dl',
+		'showParent'=>-1,
+		'prepare'=>'emDashboardPrepare'.$prepareTable,		
+		'paginate'=>$paginate,
+		'TplNextP'=>'',
+		'TplPrevP'=>'',
+		'TplPage'=>'@CODE: <li><a href="index.php?a=112&id='.$_GET['id'].'&page=[+num+]" >[+num+]</a></li>',
+		'TplCurrentPage'=>'@CODE: <li class="active"><a>[+num+]</a></li>',
+		'TplWrapPaginate'=>'@CODE: <ul id="pagination">[+wrap+]</ul>',
+		'TplDotsPage'=>'@CODE: <li><a>...</a></li>',
+		'ownerTPL'=>$this->config['module.table.outer.tpl'],
+		'tpl'=>$this->config['module.table.row.tpl'])
+		);
 	}
 	
 	/*
 	* Очищаем корзину
 	*/
-	function clearCart()	{			
+	function clearCart($oid = 0) {
 		unset($_SESSION['emCart'][$this->config['cart_name']]);		
 		if (isset($_COOKIE["token"])){
 			$token = $this->modx->db->escape($_COOKIE["token"]);
 			$this->modx->db->query('Delete from '.$this->orderthintable.' where name="'.$token.'"');
 			setcookie("token","",time()-10000,'/');							
 		}	
+		$_SESSION['last_order_id'] = $oid;
 		$this->modx->invokeEvent('OnEmerchantClearCart',array('em'=>$this));		
 	}	
 }
