@@ -515,7 +515,7 @@ class emerchant {
 		'parents'=>'1',
 		'parentField'=>'dl',
 		'showParent'=>-1,
-		'prepare'=>'emDashboardPrepare'.$prepareTable,		
+		'prepare'=>'emDashboardPrepare',		
 		'paginate'=>$paginate,
 		'TplNextP'=>'',
 		'TplPrevP'=>'',
