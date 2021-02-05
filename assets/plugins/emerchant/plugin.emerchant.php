@@ -69,8 +69,7 @@
 
 		if (isset($_GET['getTable'])){
 			$data = array();
-			$params['orderId'] = $data['orderID'] = $oid;		
-			$shk = new emerchant($modx, $params);
+			$params['orderId'] = $data['orderID'] = $oid;					
 			$data['form'] = $em->makeForm($params['orderId']);
 			$data['cart'] = $em->makeCart($em->config['module.order.row.tpl'],$em->config['module.order.owner.tpl']);	
 			echo $em->tpl->parseChunk($em->config['module.order.info.tpl'],$data);
