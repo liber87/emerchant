@@ -63,7 +63,7 @@
 	if (($modx->event->name=='OnPageNotFound') && ($_REQUEST['q']=='emerchant/module'))
 	{
 		if (!isset($_SESSION['mgrRole'])) die('Access denied!');
-		$shk = new emerchant($modx, $params);
+		$em = new emerchant($modx, $params);
 		header("HTTP/1.1 200 OK");
 		$oid = (int) $_GET['oid'];	
 
