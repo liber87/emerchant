@@ -133,7 +133,7 @@
 						<div class="card-body">
 							<div class="table-responsive">
 								<?php
-									echo $shk->getModuleTable('pages');										
+									echo $em->getModuleTable('pages');										
 								?>
 							</div>
 							<div align="center"> 
