@@ -3,10 +3,10 @@
 	if (!class_exists('emerchant')) {
 		require_once MODX_BASE_PATH."assets/plugins/emerchant/classes/class.emerchant.php";		
 	}
-	$shk = new emerchant($modx, $params);
-	if (!function_exists('ShopDashboardPrepare'))
+	$em = new emerchant($modx, $params);
+	if (!function_exists('emDashboardPrepare'))
 	{
-		function ShkDashboardPrepare($data)
+		function emDashboardPrepare($data)
 		{
 			global $modx;		
 			if ($data['date']) $data['date'] = date("d-m-Y H:i:s",$data['date']);			
