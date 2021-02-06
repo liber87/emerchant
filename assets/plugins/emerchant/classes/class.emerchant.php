@@ -6,7 +6,7 @@
  *
  * @author Liber <alexey@liber.pro>
  * @package evoShk
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 class emerchant {
@@ -19,50 +19,50 @@ class emerchant {
     function __construct(&$modx, $config = array()){
 		
         $this->modx = evolutionCMS();
-	$pconfig = $this->getPluginConfig();	
-	$config = array_merge($pconfig,$config);
-		
-	if (!$config['cart_name']) $config['cart_name'] = 'default';
-	if (!$config['pricetv']) $config['pricetv'] = 'price';
-	if (!$config['emailTo']) $config['emailTo'] = $modx->config['emailsender'];
-	if (!$config['emailFrom']) $config['emailFrom'] = $modx->config['emailsender'];
-	if (!$config['subject']) $config['subject'] = 'Новый заказ на сайте';
-		
-	$tplPaths = $this->tplPaths = MODX_BASE_PATH.'assets/plugins/emerchant/tpls/';		
-	$this->config = $config;		
-	if (isset($_SESSION['orderId'])) $this->config['orderId'] = $_SESSION['orderId'];			
-	$this->setTplsFromFiles($tplPaths);		
-	$this->rowPrepare = '';
-	$this->ownerPrepare = '';
-				        
-	include_once(MODX_BASE_PATH.'assets/snippets/DocLister/lib/DLTemplate.class.php');
-	$tpl = DLTemplate::getInstance($modx);
-	$this->tpl = $tpl;				
-	$this->ordertable = $modx->getFullTableName('emerchant_orders');
-	$this->orderthintable = $modx->getFullTableName('emerchant_orders_thin');
-	$this->tvtable = $modx->getFullTableName('site_tmplvar_contentvalues');	
-	$this->tvnametable = $modx->getFullTableName('site_tmplvars');			
-	$this->contenttable = $modx->getFullTableName('site_content');		
-	$this->priceid = $modx->db->getValue('Select `id` from '.$modx->getFullTableName('site_tmplvars').' where `name`="'.$config['pricetv'].'"');				
-				
-	if (!isset($this->config['orderId'])){			
-		//Проверяем живучисть сессии, если что, вытаскиваем из куки			
-		if ((isset($_COOKIE["token"])) && (!$_SESSION['emCart'][$this->config['cart_name']])){
-			$token = $modx->db->escape($_COOKIE["token"]);
-			$this->cart = json_decode($modx->db->getValue('Select cart from  '.$this->orderthintable.' where name="'.$token.'"'),true);
+		$pconfig = $this->getPluginConfig();	
+		$config = array_merge($pconfig,$config);
+			
+		if (!$config['cart_name']) $config['cart_name'] = 'default';
+		if (!$config['pricetv']) $config['pricetv'] = 'price';
+		if (!$config['emailTo']) $config['emailTo'] = $modx->config['emailsender'];
+		if (!$config['emailFrom']) $config['emailFrom'] = $modx->config['emailsender'];
+		if (!$config['subject']) $config['subject'] = 'Новый заказ на сайте';
+			
+		$tplPaths = $this->tplPaths = MODX_BASE_PATH.'assets/plugins/emerchant/tpls/';		
+		$this->config = $config;		
+		if (isset($_SESSION['orderId'])) $this->config['orderId'] = $_SESSION['orderId'];			
+		$this->setTplsFromFiles($tplPaths);		
+		$this->rowPrepare = '';
+		$this->ownerPrepare = '';
+							
+		include_once(MODX_BASE_PATH.'assets/snippets/DocLister/lib/DLTemplate.class.php');
+		$tpl = DLTemplate::getInstance($modx);
+		$this->tpl = $tpl;				
+		$this->ordertable = $modx->getFullTableName('emerchant_orders');
+		$this->orderthintable = $modx->getFullTableName('emerchant_orders_thin');
+		$this->tvtable = $modx->getFullTableName('site_tmplvar_contentvalues');	
+		$this->tvnametable = $modx->getFullTableName('site_tmplvars');			
+		$this->contenttable = $modx->getFullTableName('site_content');		
+		$this->priceid = $modx->db->getValue('Select `id` from '.$modx->getFullTableName('site_tmplvars').' where `name`="'.$config['pricetv'].'"');				
+					
+		if (!isset($this->config['orderId'])){			
+			//Проверяем живучисть сессии, если что, вытаскиваем из куки			
+			if ((isset($_COOKIE["token"])) && (!$_SESSION['emCart'][$this->config['cart_name']])){
+				$token = $modx->db->escape($_COOKIE["token"]);
+				$this->cart = json_decode($modx->db->getValue('Select cart from  '.$this->orderthintable.' where name="'.$token.'"'),true);
+			}
+			else{
+			if (!$_SESSION['emCart'][$this->config['cart_name']]) $_SESSION['emCart'][$this->config['cart_name']] = array();	
+			$this->cart = $_SESSION['emCart'][$this->config['cart_name']];}
 		}
-		else{
-		if (!$_SESSION['emCart'][$this->config['cart_name']]) $_SESSION['emCart'][$this->config['cart_name']] = array();	
-		$this->cart = $_SESSION['emCart'][$this->config['cart_name']];}
-	}
-	else {			
-		$this->cart = json_decode($this->modx->db->getValue('Select `cart` from '.$this->ordertable.'
-										 where id='.$this->config['orderId']),1);
-	}
-	$this->cart['different'] = $this->differentPrices();
-	$this->startCurrency();
-	$this->saveCart();
-	$this->modx->invokeEvent('OnEmerchantInit',array('em' => $this));        		
+		else {			
+			$this->cart = json_decode($this->modx->db->getValue('Select `cart` from '.$this->ordertable.'
+											 where id='.$this->config['orderId']),1);
+		}
+		$this->cart['different'] = $this->differentPrices();
+		$this->startCurrency();
+		$this->saveCart();
+		$this->modx->invokeEvent('OnEmerchantInit',array('em' => $this));        		
     }
 	
 	/*
@@ -123,12 +123,12 @@ class emerchant {
 	*/
 	function startCurrency(){
 		if (!is_array($_SESSION['emCart'][$this->config['cart_name']]['currency'])) {
-			$_SESSION['emCart'][$this->config['cart_name']]['currency'] = array('name'=>'USD','currency'=>1);
+			$_SESSION['emCart'][$this->config['cart_name']]['currency'] = array('name'=>$this->config['currency'],'currency'=>1);
 		}
 	}
 	
 	/*
-	* Получение курса 
+	* Получение текущего курса 
 	*/
 	function getCurrencyName(){				
 		return $_SESSION['emCart'][$this->config['cart_name']]['currency']['name'];		
@@ -243,7 +243,7 @@ class emerchant {
 		}
 		$key = $this->findPosition($hash);
 		if ($key!==FALSE) $this->cart['items'][$key]['count'] = $count;
-		$this->modx->invokeEvent('OneMerchantRecountPositionCart',array('hash'=>$hash,'count'=>$count,'em'=>$this));
+		$this->modx->invokeEvent('OnEmerchantRecountPositionCart',array('hash'=>$hash,'count'=>$count,'em'=>$this));
 	}
 	 
 	 /**
@@ -280,7 +280,7 @@ class emerchant {
 			$this->ordertable, 'id='.$this->config['orderId']);
 		}
 		$this->saveCartCookie($this->cart);
-		$this->modx->invokeEvent('OneMerchantSaveCart',array('action'=>$action,'em'=>$this));		
+		$this->modx->invokeEvent('OnEmerchantSaveCart',array('action'=>$action,'em'=>$this));		
 	}	
 	
 	/**
@@ -307,32 +307,38 @@ class emerchant {
 	function differentPrices(){				
 		if (!is_array($this->cart['items'])) return;		
 		$diff = array(
-		'price.base'=>0,
-		'price.add'=>0,
-		'price.full'=>0,
+		'price'=>array('base' => 0,'add'=>0,'full'=>0,'final'=>0),		
 		'delivery'=>0,
 		'payment'=>0,
 		'sale'=>0,
-		'other'=>0,
-		'count.items'=>0,
-		'price.final'=>0
+		'other'=>0,		
 		);				
 		
-		foreach($this->cart['items'] as $item){	
+		$items = 0;
 		
-			$diff['price.base'] = $diff['price.base'] + ($item['price']*$item['count']);
+		foreach($this->cart['items'] as $item){							
+			$diff['price']['base'] = $diff['price']['base'] + ($item['price']*$item['count']);			
+			
 			if ((is_array($item['price.add'])) && (count($item['price.add']))){			
 				$apf = 0;
 				foreach($item['price.add'] as $ap) $apf = $apf + $ap;
-				$diff['price.add'] = $diff['price.add'] + ($apf*$item['count']);
+				$diff['price']['add'] = $diff['price.add'] + ($apf*$item['count']);
 			}
-			$diff['price.full'] = $diff['price.base'] + $diff['price.add'];
-			$diff['count.items'] = $diff['count.items'] + $item['count'];			
+			$diff['price']['full'] = $diff['price']['base'] + $diff['price']['add'];
+			$items = $items + $item['count'];			
 		}		
 		
 		$evtOut = $this->modx->invokeEvent('OnEmerchantDifferentPrices',array('diff'=>$diff,'em'=>$this));
         if(is_array($evtOut)) $diff = json_decode($evtOut[0],true);			
-		$diff['price.final'] = $diff['price.full']+$diff['delivery']+$diff['payment']-$diff['sale']+$diff['other'];		
+		$diff['price']['final'] = $diff['price']['full']+$diff['delivery']+$diff['payment']-$diff['sale']+$diff['other'];		
+		
+		foreach($diff as $key => $val){
+			if ((is_array($val)) && (count($val))){
+				foreach($val as $key2 => $val2) $diff['currency'][$key][$key2] = $this->setCurrency($val2);								
+			} else $diff['currency'][$key] = $this->setCurrency($val);
+		}
+		$diff['em'] = array('total'=>$this->numberFormat($diff['currency']['price']['final']),'count'=>$items);
+			
 		return $diff;
 	}
 	
@@ -340,32 +346,42 @@ class emerchant {
 	* Подставляем плйесхолдеры в строку корзины
 	*/
 	function makeRowCart($tpl = '',$item = array(), $num = 0){
-		$tvs = array();
-		$res = $this->modx->db->query('SELECT name,value FROM '.$this->tvtable.'
-		as vals left join '.$this->tvnametable.' as tv on tv.id = vals.tmplvarid where vals.contentid='.$item['id']);
-		while ($row = $this->modx->db->getRow($res)) $tvs[$row['name']] = $row['value'];
 		$res = $this->modx->db->query('Select * from '.$this->contenttable.' where id='.$item['id']);				
 		$doc = $this->modx->db->getRow($res);		
 		
+		$res = $this->modx->db->query('SELECT name,value FROM '.$this->tvtable.'
+		as vals left join '.$this->tvnametable.' as tv on tv.id = vals.tmplvarid where vals.contentid='.$item['id']);
+		while ($row = $this->modx->db->getRow($res)) $doc['tv'][$row['name']] = $row['value'];
 		
+		$price = $item['price'];
 		
 		if (!is_array($doc)) $doc = array();
-		$data = array_merge($tvs,$item,$doc);				
-		$data['num'] = $num+1;
-		$data['count.items'] = $data['count'];
-		$data['price.base'] = $data['price'];
-		$data['price.options'] = 0;
-		$data['price.options.full'] = $data['price'];// + $data['price.add'];		
+		$aitem = $item;
+		unset($aitem['price.add']);		
 		
-		if (is_array($item['price.add']) && (count($data['price.add']))){
-			foreach($data['price.add'] as $name => $price){			
-				$data['price.options'] = $data['price.options'] + $price;
-				$data['price.options.full'] = $data['price.options.full'] + $price;				
+		$data = array_merge($aitem,$doc);				
+		$data['num'] = $num+1;
+		//$data['em.items'] = $data['count'];
+		
+		$data['price'] = array(
+			'base'=>array(
+				'price'=>$item['price'], // [+price.base.price+] - базовая цена
+				'subtotal'=>0, // [+price.base.subtotal+] - базовая вместе с дополнениями
+				'total'=>0), // [+price.base.total+] - общая цена
+			'add'=>array(
+				'subtotal'=>0,
+				'total'=>0)
+			);
+		
+		if (is_array($item['price.add']) && (count($item['price.add']))){
+			foreach($item['price.add'] as $name => $price){			
+				$data['price']['add'][$name] = $price; // [+price.add.название+] - цена конкретной опции
+				$data['price']['add']['subtotal'] = $data['price']['add']['subtotal'] + $price; // [+price.add.subtotal+] - цена добавок
 			}
 		}
-		$data['price.base.total'] = $data['price.base']*$data['count'];
-		$data['price.options.total'] = $data['price.options']*$data['count'];
-		$data['price.options.full.total'] = $data['price.options.full']*$data['count'];	
+		$data['price']['base']['subtotal'] = $item['price'] + $data['price']['add']['subtotal'];  //Цена товара вместе с опциями
+		$data['price']['base']['total'] = $data['price']['base']['subtotal']*$item['count']; // Общая конечная цена позиции
+				
 				
 		if ($this->rowPrepare){				
 			foreach(explode(',',$this->rowPrepare) as $name){
@@ -379,13 +395,25 @@ class emerchant {
 			}
 		}		
 		
-		foreach($data as $key => $val) if (strpos($key,'price')!==false) {				
-			$val = $this->setCurrency($val);									
-			$data[$key] = $this->numberFormat($val);
+		foreach($data['price']['base'] as $key => $val) {
+			$data['currency']['price']['base'][$key] = $this->setCurrency($val);									
+			$data['price']['base'][$key] = $this->numberFormat($val);
+		}
+		
+		foreach($data['price']['add'] as $key => $val) {
+			$data['currency']['price']['add'][$key] = $this->setCurrency($val);									
+			$data['price']['add'][$key] = $this->numberFormat($val);
 		}		
+		$data['currency']['name'] = $this->getCurrencyName();		
+		//$data['current_currency'] = $this->getCurrencyName();		
 		
-		$data['current_currency'] = $this->getCurrencyName();		
-		
+		//Упрощенные плейсхолдеры для корзины:
+		$data['em'] = array(
+			'count'=>$item['count'], // [+em.count+] - количество (обычный count глючит при пагинации в DocLister)
+			'price'=>$this->numberFormat($data['currency']['price']['base']['subtotal']), // [+em.price+] Цена с добавками по курсу
+			'total'=>$this->numberFormat($data['currency']['price']['base']['total']) // [+em.total+] Общая цена по курсу
+		);		
+				
 		return $this->tpl->parseChunk($tpl,$data).PHP_EOL;			
 	}
 	
@@ -398,11 +426,14 @@ class emerchant {
 		if ((is_array($odata)) && (count($odata))) {
 			foreach($odata as $key => $val) {
 				if ($key!='count.items') {
-					$val = $this->setCurrency($val);
+					$odata[$key.'.curreny'] = $this->setCurrency($val);
 					$odata[$key] = $this->numberFormat($val);		
 				}
 			}
 		}
+		
+		$data['currency']['name'] = $this->getCurrencyName();
+		
 		if ($oid) {
 			$order = $this->getOrderInfo($oid);
 			$odata['orderID'] = $oid;
@@ -414,7 +445,7 @@ class emerchant {
 				$odata['cart'].= $this->makeRowCart($tpl,$item,$num);		
 			}
 		}
-		$odata['current_currency'] = $this->getCurrencyName();
+				
 		return $this->tpl->parseChunk($ownerTPL,$odata);
 	}
 	
@@ -423,8 +454,13 @@ class emerchant {
 	*/
 	function getOrderInfo($oid){ 
 		$oid = (int) $oid;		
-		$ord = $this->modx->db->getValue('Select `form` from '.$this->ordertable.' where `id`='.$oid);
-		if ($ord) return json_decode($ord,1);	
+		$ord = $this->modx->db->getValue('Select `form` from '.$this->ordertable.' where `id`='.$oid);		
+		if ($ord) {
+			$order =json_decode($ord,1);
+			$evtOut = $this->modx->invokeEvent('OnEmerchantSetOrderPlaceholder',array('order'=>$oid));			
+			if(is_array($evtOut)) $order = array_merge(json_decode($evtOut[0],1),$order);	
+			return $order; 
+		}
 	}
 	
 	/*
@@ -472,7 +508,7 @@ class emerchant {
 		'name'=>$this->modx->db->escape($this->config['cart_name'])
 		],
 		$this->ordertable);
-		$this->modx->invokeEvent('OneMerchantSaveOrder',array('oid'=>$oid,'cart'=>$this->cart,'form'=>$data,'em'=>$this));
+		$this->modx->invokeEvent('OnEmerchantSaveOrder',array('oid'=>$oid,'cart'=>$this->cart,'form'=>$data,'em'=>$this));
 		return $oid;
 	}
 	
@@ -494,12 +530,12 @@ class emerchant {
 			$mail->From = $this->config['emailFrom'];
 			$mail->FromName = $this->modx->config['site_name'];
 			$mail->Subject = $this->config['subject'];
-			$mail->Body = $content;
+			$mail->Body = preg_replace('/\[\+(.+?)\\+]/', '', $content);
 			$mail->addAddress($email); 
 			$mail->send(); 
 			$mail->ClearAllRecipients();			
 		}
-		$this->modx->invokeEvent('OneMerchantSendLetter',array('oid'=>$oid,'email'=>$email,'to'=>$to,'content'=>$content));
+		$this->modx->invokeEvent('OnEmerchantSendLetter',array('oid'=>$oid,'email'=>$email,'to'=>$to,'content'=>$content));
 	}
 	
 	/*
@@ -515,7 +551,7 @@ class emerchant {
 		'parents'=>'1',
 		'parentField'=>'dl',
 		'showParent'=>-1,
-		'prepare'=>'emDashboardPrepare',		
+		'prepare'=>'emDashboardPrepare'.$prepareTable,		
 		'paginate'=>$paginate,
 		'TplNextP'=>'',
 		'TplPrevP'=>'',
